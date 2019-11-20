@@ -565,6 +565,22 @@ clinic: check-clean-src $(srcdir)/Modules/_blake2/blake2s_impl.c
 $(BUILDPYTHON):	Programs/python.o $(LIBRARY) $(LDLIBRARY) $(PY3LIBRARY)
 	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(BLDLIBRARY) $(LIBS) $(MODLIBS) $(SYSLIBS)
 
+buildspython:
+    # we need a version of python that supports -m in order to make
+    # spython. PEP-551 suggests that -m not be supported by spython
+    # no idea if what exists in .o was build with -DSPYTHON so
+    # get a clean start
+    $(MAKE) clean
+    # make "regular" python
+    $(MAKE) python
+    # remove .o files cause we're about to rebuild them with
+    # -DPYTHON
+    $(MAKE) clean
+    # build spython
+	$(MAKE) BUILDPYTHON=spython$(BUILDEXE) CFLAGS=-DSPYTHON PYTHON_FOR_BUILD=./python
+    # clean up .o files because they probably aren't what's expected
+    $(MAKE) clean
+
 platform: $(BUILDPYTHON) pybuilddir.txt
 	$(RUNSHARED) $(PYTHON_FOR_BUILD) -c 'import sys ; from sysconfig import get_platform ; print("%s-%d.%d" % (get_platform(), *sys.version_info[:2]))' >platform
 
