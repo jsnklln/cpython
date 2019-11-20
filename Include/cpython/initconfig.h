@@ -402,6 +402,10 @@ typedef struct {
 
     /* If equal to 0, stop Python initialization before the "main" phase */
     int _init_main;
+
+#ifdef SPYTHON
+    wchar_t *spython_log;
+#endif
 } PyConfig;
 
 PyAPI_FUNC(void) PyConfig_InitPythonConfig(PyConfig *config);

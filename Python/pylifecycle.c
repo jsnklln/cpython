@@ -74,9 +74,24 @@ int _Py_UnhandledKeyboardInterrupt = 0;
 _PyRuntimeState _PyRuntime = _PyRuntimeState_INIT;
 static int runtime_initialized = 0;
 
+#ifdef SPYTHON
+    int audithook(const char *event, PyObject *nargs, void *userData) {
+        fprintf(stderr, "event: =%s %s=\n", event, PyBytes_AS_STRING(
+                    PyUnicode_AsEncodedString(
+                        PyObject_Repr(nargs), "utf-8", "~E~")));
+        return 0;
+}
+#endif
+
 PyStatus
 _PyRuntime_Initialize(void)
 {
+
+    /* add audit hook before initialization */
+#ifdef SPYTHON
+    PySys_AddAuditHook(audithook, NULL);
+#endif
+
     /* XXX We only initialize once in the process, which aligns with
        the static initialization of the former globals now found in
        _PyRuntime.  However, _PyRuntime *should* be initialized with

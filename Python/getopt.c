@@ -40,14 +40,19 @@ const wchar_t *_PyOS_optarg = NULL;   /* optional argument       */
 static const wchar_t *opt_ptr = L"";
 
 /* Python command line short and long options */
+#ifdef SPYTHON
+    #define SHORT_OPTS L"h?"
+    static const _PyOS_LongOption longopts[] = {
+        {NULL, 0, 0},
+    };
+#else
+    #define SHORT_OPTS L"bBc:dEhiIJm:OqRsStuvVW:xX:?"
 
-#define SHORT_OPTS L"bBc:dEhiIJm:OqRsStuvVW:xX:?"
-
-static const _PyOS_LongOption longopts[] = {
-    {L"check-hash-based-pycs", 1, 0},
-    {NULL, 0, 0},
-};
-
+    static const _PyOS_LongOption longopts[] = {
+        {L"check-hash-based-pycs", 1, 0},
+        {NULL, 0, 0},
+    };
+#endif
 
 void _PyOS_ResetGetOpt(void)
 {

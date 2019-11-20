@@ -119,12 +119,19 @@ int Py_OptimizeFlag = 0; /* Needed by compile.c */
 int Py_NoSiteFlag = 0; /* Suppress 'import site' */
 int Py_BytesWarningFlag = 0; /* Warn on str(bytes) and str(buffer) */
 int Py_FrozenFlag = 0; /* Needed by getpath.c */
-int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
-int Py_DontWriteBytecodeFlag = 0; /* Suppress writing bytecode files (*.pyc) */
-int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
 int Py_UnbufferedStdioFlag = 0; /* Unbuffered binary std{in,out,err} */
 int Py_HashRandomizationFlag = 0; /* for -R and PYTHONHASHSEED */
-int Py_IsolatedFlag = 0; /* for -I, isolate from user's env */
+#ifdef SPYTHON
+    int Py_IsolatedFlag = 1; /* for -I, isolate from user's env */
+    int Py_DontWriteBytecodeFlag = 1; /* Suppress writing bytecode files (*.pyc) */
+    int Py_IgnoreEnvironmentFlag = 1; /* e.g. PYTHONPATH, PYTHONHOME */
+    int Py_NoUserSiteDirectory = 1; /* for -s and site.py */
+#else
+    int Py_IsolatedFlag = 0; /* for -I, isolate from user's env */
+    int Py_DontWriteBytecodeFlag = 0; /* Suppress writing bytecode files (*.pyc) */
+    int Py_IgnoreEnvironmentFlag = 0; /* e.g. PYTHONPATH, PYTHONHOME */
+    int Py_NoUserSiteDirectory = 0; /* for -s and site.py */
+#endif
 #ifdef MS_WINDOWS
 int Py_LegacyWindowsFSEncodingFlag = 0; /* Uses mbcs instead of utf-8 */
 int Py_LegacyWindowsStdioFlag = 0; /* Uses FileIO instead of WindowsConsoleIO */
@@ -774,6 +781,9 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
 
     COPY_WSTR_ATTR(pycache_prefix);
     COPY_WSTR_ATTR(pythonpath_env);
+#ifdef SPYTHON
+    COPY_WSTR_ATTR(spython_log);
+#endif
     COPY_WSTR_ATTR(home);
     COPY_WSTR_ATTR(program_name);
 
@@ -883,6 +893,9 @@ config_as_dict(const PyConfig *config)
     SET_ITEM_WSTRLIST(xoptions);
     SET_ITEM_WSTRLIST(warnoptions);
     SET_ITEM_WSTR(pythonpath_env);
+#ifdef SPYTHON
+    SET_ITEM_WSTR(spython_log);
+#endif
     SET_ITEM_WSTR(home);
     SET_ITEM_WSTRLIST(module_search_paths);
     SET_ITEM_WSTR(executable);
@@ -1647,6 +1660,25 @@ config_read(PyConfig *config)
 {
     PyStatus status;
     const PyPreConfig *preconfig = &_PyRuntime.preconfig;
+
+#ifdef SPYTHON
+    /* get SPYTHONLOG from env.  Lie and say we're using
+     * the env even though we're not */
+    if (config->spython_log == NULL) {
+        int save;
+        /* we shouldn't really save this, it's gotta be 0
+         * for us to be doing spython but do it anyway
+         * just cause */
+        save = config->use_environment;
+        config->use_environment = 1;
+        status = CONFIG_GET_ENV_DUP(config, &config->spython_log,
+                                    L"SPYTHONLOG", "SPYTHONLOG");
+        config->use_environment = save;
+        if (_PyStatus_EXCEPTION(status)) {
+            return status;
+        }
+    }
+#endif
 
     if (config->use_environment) {
         status = config_read_env_vars(config);
@@ -2431,6 +2463,15 @@ PyConfig_Read(PyConfig *config)
         return status;
     }
 
+#if SPYTHON
+    config->isolated = 1;
+    config->use_environment = 0;
+    config->write_bytecode = 0;
+    config->user_site_directory = 0;
+    config->site_import = 0;
+    config->spython_log = NULL;
+#endif
+
     config_get_global_vars(config);
 
     if (_PyWideStringList_Copy(&orig_argv, &config->argv) < 0) {
@@ -2639,6 +2680,7 @@ _Py_DumpPathConfig(PyThreadState *tstate)
     PySys_WriteStderr("  environment = %i\n", config->use_environment);
     PySys_WriteStderr("  user site = %i\n", config->user_site_directory);
     PySys_WriteStderr("  import site = %i\n", config->site_import);
+    PySys_WriteStderr("  spython log = %ls\n", config->spython_log);
 #undef DUMP_CONFIG
 
 #define DUMP_SYS(NAME) \
