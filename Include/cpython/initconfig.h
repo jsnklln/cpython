@@ -404,7 +404,7 @@ typedef struct {
     int _init_main;
 
 #ifdef SPYTHON
-    wchar_t *spython_log;
+    FILE *spython_log;
 #endif
 } PyConfig;
 

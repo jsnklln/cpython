@@ -76,7 +76,14 @@ static int runtime_initialized = 0;
 
 #ifdef SPYTHON
     int audithook(const char *event, PyObject *nargs, void *userData) {
-        fprintf(stderr, "event: =%s %s=\n", event, PyBytes_AS_STRING(
+
+        _PyRuntimeState *runtime = &_PyRuntime;
+        PyThreadState *tstate = _PyRuntimeState_GetThreadState(runtime);
+
+        fprintf(tstate->interp->config.spython_log,
+                "event: =%s %s=\n",
+                event,
+                PyBytes_AS_STRING(
                     PyUnicode_AsEncodedString(
                         PyObject_Repr(nargs), "utf-8", "~E~")));
         return 0;
