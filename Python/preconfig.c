@@ -449,9 +449,6 @@ _PyPreConfig_GetConfig(PyPreConfig *preconfig, const PyConfig *config)
     COPY_ATTR(dev_mode);
 /* this might should go here by stealing from initconfig.c
  * but this function doesn't return PyStatus like _PyConfig_Copy
- * I don't love that you have to define the short_opts in both
- * the pre and the non-pre configs. I feel like there's a copy
- * that takes place.  Need to find it.
     COPY_WSTR_ATTR(short_opts);
 */
     if (preconfig->short_opts == NULL) {
