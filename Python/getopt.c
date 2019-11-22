@@ -57,10 +57,17 @@ void _PyOS_ResetGetOpt(void)
     opt_ptr = L"";
 }
 
-int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
+int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex, wchar_t *short_opts)
 {
     wchar_t *ptr;
     wchar_t option;
+    wchar_t *sopts;
+
+    if (short_opts == NULL) {
+        sopts = SHORT_OPTS;
+    } else {
+        sopts = short_opts;
+    }
 
     if (*opt_ptr == '\0') {
 
@@ -133,7 +140,7 @@ int _PyOS_GetOpt(Py_ssize_t argc, wchar_t * const *argv, int *longindex)
         return '_';
     }
 
-    if ((ptr = wcschr(SHORT_OPTS, option)) == NULL) {
+    if ((ptr = wcschr(sopts, option)) == NULL) {
         if (_PyOS_opterr)
             fprintf(stderr, "Unknown option: -%c\n", (char)option);
         return '_';

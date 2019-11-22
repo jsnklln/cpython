@@ -118,6 +118,8 @@ typedef struct {
     /* Memory allocator: PYTHONMALLOC env var.
        See PyMemAllocatorName for valid values. */
     int allocator;
+
+    wchar_t *short_opts;
 } PyPreConfig;
 
 PyAPI_FUNC(void) PyPreConfig_InitPythonConfig(PyPreConfig *config);
@@ -402,6 +404,9 @@ typedef struct {
 
     /* If equal to 0, stop Python initialization before the "main" phase */
     int _init_main;
+
+    wchar_t *short_opts;
+
 } PyConfig;
 
 PyAPI_FUNC(void) PyConfig_InitPythonConfig(PyConfig *config);

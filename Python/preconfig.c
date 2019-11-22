@@ -178,7 +178,7 @@ _PyPreCmdline_SetConfig(const _PyPreCmdline *cmdline, PyConfig *config)
 
 /* Parse the command line arguments */
 static PyStatus
-precmdline_parse_cmdline(_PyPreCmdline *cmdline)
+precmdline_parse_cmdline(_PyPreCmdline *cmdline, const PyPreConfig *preconfig)
 {
     const PyWideStringList *argv = &cmdline->argv;
 
@@ -188,7 +188,7 @@ precmdline_parse_cmdline(_PyPreCmdline *cmdline)
     _PyOS_opterr = 0;
     do {
         int longindex = -1;
-        int c = _PyOS_GetOpt(argv->length, argv->items, &longindex);
+        int c = _PyOS_GetOpt(argv->length, argv->items, &longindex, preconfig->short_opts);
 
         if (c == EOF || c == 'c' || c == 'm') {
             break;
@@ -230,7 +230,7 @@ _PyPreCmdline_Read(_PyPreCmdline *cmdline, const PyPreConfig *preconfig)
     precmdline_get_preconfig(cmdline, preconfig);
 
     if (preconfig->parse_argv) {
-        PyStatus status = precmdline_parse_cmdline(cmdline);
+        PyStatus status = precmdline_parse_cmdline(cmdline, preconfig);
         if (_PyStatus_EXCEPTION(status)) {
             return status;
         }
@@ -380,6 +380,7 @@ preconfig_copy(PyPreConfig *config, const PyPreConfig *config2)
     COPY_ATTR(coerce_c_locale_warn);
     COPY_ATTR(utf8_mode);
     COPY_ATTR(allocator);
+    COPY_ATTR(short_opts);
 #ifdef MS_WINDOWS
     COPY_ATTR(legacy_windows_fs_encoding);
 #endif
@@ -446,6 +447,16 @@ _PyPreConfig_GetConfig(PyPreConfig *preconfig, const PyConfig *config)
     COPY_ATTR(isolated);
     COPY_ATTR(use_environment);
     COPY_ATTR(dev_mode);
+/* this might should go here by stealing from initconfig.c
+ * but this function doesn't return PyStatus like _PyConfig_Copy
+ * I don't love that you have to define the short_opts in both
+ * the pre and the non-pre configs. I feel like there's a copy
+ * that takes place.  Need to find it.
+    COPY_WSTR_ATTR(short_opts);
+*/
+    if (preconfig->short_opts == NULL) {
+        preconfig->short_opts = config->short_opts;
+    }
 
 #undef COPY_ATTR
 }

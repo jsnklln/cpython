@@ -657,6 +657,7 @@ PyConfig_InitIsolatedConfig(PyConfig *config)
     config->faulthandler = 0;
     config->tracemalloc = 0;
     config->pathconfig_warnings = 0;
+    config->short_opts = L"h?";
 #ifdef MS_WINDOWS
     config->legacy_windows_stdio = 0;
 #endif
@@ -816,6 +817,7 @@ _PyConfig_Copy(PyConfig *config, const PyConfig *config2)
     COPY_WSTR_ATTR(run_filename);
     COPY_WSTR_ATTR(check_hash_pycs_mode);
     COPY_ATTR(pathconfig_warnings);
+    COPY_WSTR_ATTR(short_opts);
     COPY_ATTR(_init_main);
 
 #undef COPY_ATTR
@@ -1834,7 +1836,7 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
     _PyOS_ResetGetOpt();
     do {
         int longindex = -1;
-        int c = _PyOS_GetOpt(argv->length, argv->items, &longindex);
+        int c = _PyOS_GetOpt(argv->length, argv->items, &longindex, config->short_opts);
         if (c == EOF) {
             break;
         }
